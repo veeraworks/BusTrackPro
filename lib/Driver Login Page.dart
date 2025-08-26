@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'Driver Signup Page.dart';
 import 'Forgot password.dart';
-import 'main.dart' hide ForgotPasswordPage, DriverSignUpPage;
+import 'main.dart' hide ForgotPasswordPage, DriverSignUpPage, DriverSignupPage;
 
 class DriverLoginPage extends StatefulWidget {
   @override
@@ -39,7 +39,7 @@ class _DriverLoginPageState extends State<DriverLoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.brown.shade600,
+      backgroundColor: const Color(0xFFF4F6F8), // Light background
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -47,65 +47,85 @@ class _DriverLoginPageState extends State<DriverLoginPage> {
             key: _formKey,
             child: Column(
               children: [
-                SizedBox(height: 120),
-                Icon(Icons.directions_bus_filled_outlined, size: 98, color: Colors.grey.shade300),
-                SizedBox(height: 10),
+                const SizedBox(height: 120),
+
+                Icon(Icons.directions_bus_filled_outlined,
+                    size: 98, color: Color(0xFF1E88E5)), // Blue icon
+
+                const SizedBox(height: 10),
+
                 RichText(
-                  text: TextSpan(
+                  text: const TextSpan(
                     children: [
                       TextSpan(
                         text: 'BusTrack',
-                        style: TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 28,
+                          color: Color(0xFF212121), // Dark text
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       TextSpan(
                         text: 'Pro',
-                        style: TextStyle(fontSize: 40, color: Colors.amber, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 40,
+                          color: Color(0xFF1E88E5), // Blue highlight
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                SizedBox(height: 50),
+
+                const SizedBox(height: 50),
+
+                // Driver ID
                 TextFormField(
                   controller: _driverIDController,
-                  keyboardType: TextInputType.text,
                   decoration: InputDecoration(
                     hintText: 'Driver ID',
+                    prefixIcon: Icon(Icons.person, color: Color(0xFF1565C0)),
                     filled: true,
                     fillColor: Colors.white,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15.0)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15.0),
+                        borderSide: BorderSide.none),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your Driver ID';
-                    }
-                    return null;
-                  },
+                  validator: (value) =>
+                  value == null || value.isEmpty ? 'Please enter your Driver ID' : null,
                 ),
-                SizedBox(height: 20),
+
+                const SizedBox(height: 20),
+
+                // Password
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     hintText: 'Password',
+                    prefixIcon: Icon(Icons.lock, color: Color(0xFF1565C0)),
                     filled: true,
                     fillColor: Colors.white,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15.0)),
                     suffixIcon: IconButton(
-                      icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.grey,
+                      ),
                       onPressed: () {
                         setState(() {
                           _obscurePassword = !_obscurePassword;
                         });
                       },
                     ),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15.0),
+                        borderSide: BorderSide.none),
                   ),
-                  validator: (value) {
-                    if (value == null || value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
+                  validator: (value) =>
+                  value == null || value.length < 6 ? 'Password must be at least 6 characters' : null,
                 ),
+
+                // Remember & Forgot
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -119,7 +139,7 @@ class _DriverLoginPageState extends State<DriverLoginPage> {
                             });
                           },
                         ),
-                        Text('Remember Me', style: TextStyle(color: Colors.white)),
+                        const Text('Remember Me'),
                       ],
                     ),
                     TextButton(
@@ -129,11 +149,17 @@ class _DriverLoginPageState extends State<DriverLoginPage> {
                           MaterialPageRoute(builder: (_) => ForgotPasswordPage()),
                         );
                       },
-                      child: Text("Forgot Password?", style: TextStyle(color: Colors.orange)),
+                      child: const Text(
+                        "Forgot Password?",
+                        style: TextStyle(color: Color(0xFF00ACC1)), // Cyan accent
+                      ),
                     ),
                   ],
                 ),
-                SizedBox(height: 20),
+
+                const SizedBox(height: 20),
+
+                // Create Account
                 TextButton(
                   onPressed: () {
                     Navigator.push(
@@ -141,27 +167,34 @@ class _DriverLoginPageState extends State<DriverLoginPage> {
                       MaterialPageRoute(builder: (_) => DriverSignupPage()),
                     );
                   },
-                  child: Text(
+                  child: const Text(
                     "Create New Account",
                     style: TextStyle(
-                      color: Colors.orange,
+                      color: Color(0xFF1565C0), // Deep blue
                       fontSize: 20,
                     ),
                   ),
                 ),
-                SizedBox(height: 30),
+
+                const SizedBox(height: 30),
+
+                // Login Button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.yellow.shade700,
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+                      backgroundColor: const Color(0xFF1E88E5), // Primary Blue
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0)),
                     ),
                     child: _isLoading
-                        ? CircularProgressIndicator(color: Colors.white)
-                        : Text('Login', style: TextStyle(fontSize: 17, color: Colors.black)),
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                      'Login',
+                      style: TextStyle(fontSize: 17, color: Colors.white),
+                    ),
                   ),
                 ),
               ],
@@ -172,3 +205,4 @@ class _DriverLoginPageState extends State<DriverLoginPage> {
     );
   }
 }
+
