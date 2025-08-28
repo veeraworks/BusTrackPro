@@ -14,12 +14,12 @@ Future<void> loginStudent(String studentid, String password) async {
       'Content-Type': 'application/json',
     },
     body: jsonEncode({
-      'studentid': studentid,  // ✅ use correct field
+      'studentid': studentid,  //  use correct field
       'password': password,
     }),
   );
 
-  if (response.statusCode == 200) {   // ✅ login should return 200
+  if (response.statusCode == 200) {   //  login should return 200
     print('Login success: ${response.body}');
   } else {
     print('Login failed: ${response.statusCode} - ${response.body}');
