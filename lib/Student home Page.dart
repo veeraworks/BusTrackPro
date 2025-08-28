@@ -320,7 +320,6 @@ class AboutApp extends StatelessWidget {
             const SizedBox(height: 8),
             _buildBullet("Version: 1.0.0"),
             _buildBullet("Status: Active"),
-            _buildBullet("Platform: Android (Flutter-based UI)"),
             const SizedBox(height: 20),
           ],
         ),
@@ -547,4 +546,3 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 }
-
