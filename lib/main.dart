@@ -5,8 +5,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+
 Future<void> loginStudent(String studentid, String password) async {
-  final url = Uri.parse('http://172.16.127.231:9090/login'); // backend IP
+  final url = Uri.parse('http://10.68.187.121:9090/login'); // backend IP
 
   final response = await http.post(
     url,
@@ -50,7 +51,7 @@ class WelcomePage extends StatelessWidget {
               Spacer(flex: 2),
 
               // Bus Icon
-              Icon(Icons.directions_bus_filled, size: 100, color: Color(0xFF3E64FF)),
+              Icon(Icons.directions_bus_outlined, size: 100, color: Color(0xFF3E64FF)),
 
 
               SizedBox(height: 24),
@@ -150,49 +151,65 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _StudentIDController = TextEditingController();
+  final TextEditingController _studentIdController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-
 
   bool _obscurePassword = true;
   bool _rememberMe = false;
   bool _isLoading = false;
 
-  void _login() {
+  // 🔹 Replace with your backend URL
+  final Uri url = Uri.parse("http://172.16.127.239:9090/login");
+
+  Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() => _isLoading = true);
 
-      String userId = _StudentIDController.text.trim();
-      String password = _passwordController.text;
+      try {
+        final response = await http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'studentId': _studentIdController.text.trim(),
+            'password': _passwordController.text.trim(),
+          }),
+        );
 
-      ;Future.delayed(Duration(seconds: 2), () {
-            setState(() {
-              _isLoading = false;
-            });
+        setState(() => _isLoading = false);
 
-            if (userId == 'hi' && password == 'hi123456') {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => StudentHomePage(
-                    studentName: 'Vishwa v.',
-                    studentId: 'hi',
-                    phoneNumber: '9876543210',
-                    stopName: 'Noothanchari',
-                    routeNumber: '4',
-                    collegeName: 'SriSaiRam College',
-                  ),
-                ),
-              );
-        } else {
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => StudentHomePage(
+                studentName: data['name'],
+                studentId: data['studentId'],
+                phoneNumber: data['phoneNumber'],
+                stopName: data['stopName'],
+                routeNumber: data['routeNumber'],
+                collegeName: data['collegeName'],
+              ),
+            ),
+          );
+        } else if (response.statusCode == 401) {
+          // Unauthorized (wrong password)
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Invalid User ID or Password')),
           );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Server Error: ${response.statusCode}')),
+          );
         }
-      });
+      } catch (e) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to connect to server')),
+        );
+      }
     }
   }
 
@@ -208,7 +225,7 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               children: [
                 SizedBox(height: 80),
-                Icon(Icons.directions_bus, size: 90, color: Color(0xFF3E64FF)),
+                Icon(Icons.person, size: 90, color: Color(0xFF3E64FF)),
                 SizedBox(height: 10),
                 RichText(
                   text: TextSpan(
@@ -234,16 +251,19 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 SizedBox(height: 40),
                 TextFormField(
-                  controller: _StudentIDController,
+                  controller: _studentIdController,
                   decoration: InputDecoration(
                     hintText: 'Student ID',
                     hintStyle: TextStyle(color: Color(0xFF707070)),
                     fillColor: Colors.white,
                     filled: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                    contentPadding:
+                    EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15)),
                   ),
-                  validator: (value) => value == null || value.isEmpty ? 'Enter your User ID' : null,
+                  validator: (value) =>
+                  value == null || value.isEmpty ? 'Enter your User ID' : null,
                 ),
                 SizedBox(height: 20),
                 TextFormField(
@@ -254,17 +274,23 @@ class _LoginPageState extends State<LoginPage> {
                     hintStyle: TextStyle(color: Color(0xFF707070)),
                     fillColor: Colors.white,
                     filled: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                    contentPadding:
+                    EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15)),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: Color(0xFF3E64FF),
                       ),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
-                  validator: (value) => value == null || value.length < 6
+                  validator: (value) =>
+                  value == null || value.length < 6
                       ? 'Password must be at least 6 characters'
                       : null,
                 ),
@@ -277,20 +303,27 @@ class _LoginPageState extends State<LoginPage> {
                         Checkbox(
                           value: _rememberMe,
                           activeColor: Color(0xFF00C9A7),
-                          onChanged: (value) => setState(() => _rememberMe = value!),
+                          onChanged: (value) =>
+                              setState(() => _rememberMe = value!),
                         ),
-                        Text('Remember Me', style: TextStyle(color: Color(0xFF1A1A1A))),
+                        Text('Remember Me',
+                            style: TextStyle(color: Color(0xFF1A1A1A))),
                       ],
                     ),
                     TextButton(
-                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ForgotPasswordPage())),
-                      child: Text("Forgot Password?", style: TextStyle(color: Color(0xFF3E64FF))),
+                      onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => ForgotPasswordPage())),
+                      child: Text("Forgot Password?",
+                          style: TextStyle(color: Color(0xFF3E64FF))),
                     ),
                   ],
                 ),
                 SizedBox(height: 10),
                 TextButton(
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CreateAccountPage())),
+                  onPressed: () => Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => CreateAccountPage())),
                   child: Text(
                     "Create New Account",
                     style: TextStyle(color: Color(0xFF3E64FF), fontSize: 18),
@@ -304,11 +337,14 @@ class _LoginPageState extends State<LoginPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFF00C9A7),
                       padding: EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                     child: _isLoading
                         ? CircularProgressIndicator(color: Colors.white)
-                        : Text('Login', style: TextStyle(fontSize: 18, color: Colors.white)),
+                        : Text('Login',
+                        style:
+                        TextStyle(fontSize: 18, color: Colors.white)),
                   ),
                 ),
               ],
@@ -332,21 +368,26 @@ class DriverLoginPage extends StatefulWidget {
 class _DriverLoginPageState extends State<DriverLoginPage> {
   final TextEditingController _driverIDController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
   bool _obscurePassword = true;
   bool _rememberMe = false;
   bool _isLoading = false;
 
+  final _formKey = GlobalKey<FormState>();
+
   void _login() {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+      setState(() {
+        _isLoading = true;
+      });
+
       Future.delayed(Duration(seconds: 2), () {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Driver login successful!')),
         );
-        // TODO: Navigate to DriverHomePage
       });
     }
   }
@@ -354,148 +395,174 @@ class _DriverLoginPageState extends State<DriverLoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.brown.shade50,
+      backgroundColor: const Color(0xFFF4F6F8), // Light background
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  Icon(Icons.directions_bus_filled_outlined, size: 100, color: Colors.brown.shade400),
-                  SizedBox(height: 16),
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'BusTrack',
-                          style: TextStyle(fontSize: 28, color: Colors.brown.shade700, fontWeight: FontWeight.bold),
-                        ),
-                        TextSpan(
-                          text: 'Pro',
-                          style: TextStyle(fontSize: 32, color: Colors.yellow.shade800, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 40),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                const SizedBox(height: 120),
 
-                  // Driver ID
-                  _buildTextField(
-                    controller: _driverIDController,
-                    hint: 'Driver ID',
-                    icon: Icons.person_outline,
-                    validator: (value) =>
-                    value == null || value.isEmpty ? 'Enter Driver ID' : null,
-                  ),
-                  SizedBox(height: 20),
+                Icon(Icons.directions_bus_filled_outlined,
+                    size: 98, color: Color(0xFF1E88E5)), // Blue icon
 
-                  // Password
-                  _buildTextField(
-                    controller: _passwordController,
-                    hint: 'Password',
-                    icon: Icons.lock_outline,
-                    obscure: _obscurePassword,
-                    suffix: IconButton(
-                      icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility),
-                      onPressed: () =>
-                          setState(() => _obscurePassword = !_obscurePassword),
-                    ),
-                    validator: (value) =>
-                    value != null && value.length < 6 ? 'Min 6 characters' : null,
-                  ),
-                  SizedBox(height: 10),
+                const SizedBox(height: 10),
 
-                  // Remember Me and Forgot
-                  Row(
+                RichText(
+                  text: const TextSpan(
                     children: [
-                      Checkbox(
-                        value: _rememberMe,
-                        onChanged: (val) => setState(() => _rememberMe = val!),
+                      TextSpan(
+                        text: 'BusTrack',
+                        style: TextStyle(
+                          fontSize: 28,
+                          color: Color(0xFF212121), // Dark text
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      Text('Remember Me', style: TextStyle(color: Colors.brown.shade700)),
-                      Spacer(),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => ForgotPasswordPage()));
-                        },
-                        child: Text("Forgot Password?", style: TextStyle(color: Colors.yellow.shade800)),
+                      TextSpan(
+                        text: 'Pro',
+                        style: TextStyle(
+                          fontSize: 40,
+                          color: Color(0xFF1E88E5), // Blue highlight
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 20),
+                ),
 
-                  // Login Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _login,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.yellow.shade700,
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
+                const SizedBox(height: 50),
+
+                // Driver ID
+                TextFormField(
+                  controller: _driverIDController,
+                  decoration: InputDecoration(
+                    hintText: 'Driver ID',
+                    prefixIcon: Icon(Icons.person, color: Color(0xFF1565C0)),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15.0),
+                        borderSide: BorderSide.none),
+                  ),
+                  validator: (value) =>
+                  value == null || value.isEmpty ? 'Please enter your Driver ID' : null,
+                ),
+
+                const SizedBox(height: 20),
+
+                // Password
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  decoration: InputDecoration(
+                    hintText: 'Password',
+                    prefixIcon: Icon(Icons.lock, color: Color(0xFF1565C0)),
+                    filled: true,
+                    fillColor: Colors.white,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.grey,
                       ),
-                      child: _isLoading
-                          ? CircularProgressIndicator(color: Colors.white)
-                          : Text('Login', style: TextStyle(fontSize: 18, color: Colors.black)),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
                     ),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15.0),
+                        borderSide: BorderSide.none),
                   ),
-                  SizedBox(height: 16),
+                  validator: (value) =>
+                  value == null || value.length < 6 ? 'Password must be at least 6 characters' : null,
+                ),
 
-                  // Create Account
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => DriverSignupPage()));
-                    },
-                    child: Text(
-                      "Create New Account",
-                      style: TextStyle(color: Colors.brown.shade800, fontWeight: FontWeight.bold),
+                // Remember & Forgot
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _rememberMe,
+                          onChanged: (value) {
+                            setState(() {
+                              _rememberMe = value!;
+                            });
+                          },
+                        ),
+                        const Text('Remember Me'),
+                      ],
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => ForgotPasswordPage()),
+                        );
+                      },
+                      child: const Text(
+                        "Forgot Password?",
+                        style: TextStyle(color: Color(0xFF00ACC1)), // Cyan accent
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                // Create Account
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => DriverSignupPage()),
+                    );
+                  },
+                  child: const Text(
+                    "Create New Account",
+                    style: TextStyle(
+                      color: Color(0xFF1565C0), // Deep blue
+                      fontSize: 20,
                     ),
                   ),
-                ],
-              ),
+                ),
+
+                const SizedBox(height: 30),
+
+                // Login Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _login,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1E88E5), // Primary Blue
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0)),
+                    ),
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                      'Login',
+                      style: TextStyle(fontSize: 17, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ),
     );
   }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hint,
-    required IconData icon,
-    Widget? suffix,
-    bool obscure = false,
-    required String? Function(String?) validator,
-  }) {
-    return TextFormField(
-      controller: controller,
-      obscureText: obscure,
-      validator: validator,
-      decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: Colors.brown.shade400),
-        suffixIcon: suffix,
-        hintText: hint,
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: EdgeInsets.symmetric(vertical: 18.0, horizontal: 20),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-      ),
-    );
-  }
 }
+
+
 
 
 
@@ -754,7 +821,8 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
 
 
 
-// -----------------Driver Signup Page-----------------
+// -----------------Driver Signup Page-------------------------
+
 
 
 class DriverSignupPage extends StatefulWidget {
@@ -764,84 +832,186 @@ class DriverSignupPage extends StatefulWidget {
 
 class _DriverSignupPageState extends State<DriverSignupPage> {
   final _formKey = GlobalKey<FormState>();
-
-  TextEditingController nameController = TextEditingController();
-  TextEditingController driverIdController = TextEditingController();
-  TextEditingController phoneController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _driverIdController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.brown.shade600,
+      backgroundColor: const Color(0xFFE3F2FD), // Light Blue-Gray
       appBar: AppBar(
-        backgroundColor: Colors.yellow.shade700,
-        title: Text("Driver Signup", style: TextStyle(color: Colors.brown.shade800)),
-        centerTitle: true,
-        iconTheme: IconThemeData(color: Colors.brown.shade800),
+        backgroundColor: const Color(0xFF1565C0), // Deep Blue
+        title: const Text(
+          "Driver Signup",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              buildTextField(nameController, "Name", Icons.person),
-              buildTextField(driverIdController, "Driver ID", Icons.badge),
-              buildTextField(phoneController, "Phone Number", Icons.phone),
-              buildTextField(passwordController, "Password", Icons.lock, obscure: true),
-              SizedBox(height: 25),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.yellow.shade700,
-                  padding: EdgeInsets.symmetric(vertical: 15),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+
+                //  Bus Icon at the top
+                Center(
+                  child: Icon(
+                    Icons.directions_bus,
+                    size: 100,
+                    color: Color(0xFF1565C0), // Deep Blue same as AppBar
+                  ),
                 ),
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    // Perform signup logic
-                    print("Driver account created!");
-                  }
-                },
-                child: Text(
-                  "Create Account",
-                  style: TextStyle(color: Colors.brown.shade800, fontSize: 16, fontWeight: FontWeight.bold),
+                const SizedBox(height: 24),
+
+                _buildTextField(
+                  controller: _nameController,
+                  icon: Icons.person,
+                  label: "Name",
                 ),
-              )
-            ],
+                const SizedBox(height: 16),
+                _buildTextField(
+                  controller: _driverIdController,
+                  icon: Icons.badge,
+                  label: "Driver ID",
+                ),
+                const SizedBox(height: 16),
+                _buildTextField(
+                  controller: _phoneController,
+                  icon: Icons.phone,
+                  label: "Phone Number",
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 16),
+                _buildTextField(
+                  controller: _passwordController,
+                  icon: Icons.lock,
+                  label: "Password",
+                  obscureText: true,
+                ),
+                const SizedBox(height: 16),
+                //  Confirm Password Field
+                _buildTextField(
+                  controller: _confirmPasswordController,
+                  icon: Icons.lock_outline,
+                  label: "Confirm Password",
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Confirm Password cannot be empty";
+                    }
+                    if (value != _passwordController.text) {
+                      return "Passwords do not match";
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 32),
+
+                // Gradient Button
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(30),
+                    color: const Color(0xFF00C9A7), // Solid Driver Green
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 6,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent, // let Container color show
+                      shadowColor: Colors.transparent,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Account Created!")),
+                        );
+                      }
+                    },
+                    child: const Text(
+                      "Create Account",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget buildTextField(TextEditingController controller, String label, IconData icon, {bool obscure = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required IconData icon,
+    required String label,
+    bool obscureText = false,
+    TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
       child: TextFormField(
         controller: controller,
-        obscureText: obscure,
-        style: TextStyle(color: Colors.white),
+        obscureText: obscureText,
+        keyboardType: keyboardType,
         decoration: InputDecoration(
-          prefixIcon: Icon(icon, color: Colors.white),
+          prefixIcon: Icon(icon, color: const Color(0xFF009688)), // Teal accent
           labelText: label,
-          labelStyle: TextStyle(color: Colors.white),
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.white),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.yellow),
-          )
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
         ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter $label';
-          }
-          return null;
-        },
+        validator: validator ??
+                (value) {
+              if (value == null || value.isEmpty) {
+                return "$label cannot be empty";
+              }
+              return null;
+            },
       ),
     );
   }
 }
+
+
 
 //----------------Student Home Page-----------------------
 
