@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'Forgot password.dart';
 import 'Student home Page.dart';
 import 'User Signup Page.dart';
 import 'api_service.dart'; // our backend connection
+
 
 class LoginPage extends StatefulWidget {
   @override
@@ -10,7 +14,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _StudentIDController = TextEditingController();
+  final TextEditingController _studentIdController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
@@ -18,41 +22,55 @@ class _LoginPageState extends State<LoginPage> {
   bool _rememberMe = false;
   bool _isLoading = false;
 
-  void _login() async {
+  // 🔹 Replace with your backend URL
+  final Uri url = Uri.parse("http://172.16.127.239:9090/login");
+
+  Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() => _isLoading = true);
 
-      String userId = _StudentIDController.text.trim();
-      String password = _passwordController.text;
-
-      // call API
-      final student = await ApiService.loginStudent(userId, password);
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (student != null) {
-        // ✅ Navigate to Home Page with student details
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => StudentHomePage(
-              studentName: student["name"],
-              studentId: student["studentId"],
-              phoneNumber: student["phoneNumber"],
-              stopName: student["stopName"],
-              routeNumber: student["routeNumber"],
-              collegeName: student["collegeName"],
-            ),
-          ),
+      try {
+        final response = await http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'studentId': _studentIdController.text.trim(),
+            'password': _passwordController.text.trim(),
+          }),
         );
-      } else {
-        // ❌ show error
+
+        setState(() => _isLoading = false);
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => StudentHomePage(
+                studentName: data['name'],
+                studentId: data['studentId'],
+                phoneNumber: data['phoneNumber'],
+                stopName: data['stopName'],
+                routeNumber: data['routeNumber'],
+                collegeName: data['collegeName'],
+              ),
+            ),
+          );
+        } else if (response.statusCode == 401) {
+          // Unauthorized (wrong password)
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Invalid User ID or Password')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Server Error: ${response.statusCode}')),
+          );
+        }
+      } catch (e) {
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Invalid User ID or Password")),
+          SnackBar(content: Text('Failed to connect to server')),
         );
       }
     }
@@ -70,7 +88,7 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               children: [
                 SizedBox(height: 80),
-                Icon(Icons.directions_bus, size: 90, color: Color(0xFF3E64FF)),
+                Icon(Icons.person, size: 90, color: Color(0xFF3E64FF)),
                 SizedBox(height: 10),
                 RichText(
                   text: TextSpan(
@@ -96,16 +114,19 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 SizedBox(height: 40),
                 TextFormField(
-                  controller: _StudentIDController,
+                  controller: _studentIdController,
                   decoration: InputDecoration(
                     hintText: 'Student ID',
                     hintStyle: TextStyle(color: Color(0xFF707070)),
                     fillColor: Colors.white,
                     filled: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                    contentPadding:
+                    EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15)),
                   ),
-                  validator: (value) => value == null || value.isEmpty ? 'Enter your User ID' : null,
+                  validator: (value) =>
+                  value == null || value.isEmpty ? 'Enter your User ID' : null,
                 ),
                 SizedBox(height: 20),
                 TextFormField(
@@ -116,17 +137,23 @@ class _LoginPageState extends State<LoginPage> {
                     hintStyle: TextStyle(color: Color(0xFF707070)),
                     fillColor: Colors.white,
                     filled: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                    contentPadding:
+                    EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15)),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: Color(0xFF3E64FF),
                       ),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
-                  validator: (value) => value == null || value.length < 6
+                  validator: (value) =>
+                  value == null || value.length < 6
                       ? 'Password must be at least 6 characters'
                       : null,
                 ),
@@ -139,22 +166,27 @@ class _LoginPageState extends State<LoginPage> {
                         Checkbox(
                           value: _rememberMe,
                           activeColor: Color(0xFF00C9A7),
-                          onChanged: (value) => setState(() => _rememberMe = value!),
+                          onChanged: (value) =>
+                              setState(() => _rememberMe = value!),
                         ),
-                        Text('Remember Me', style: TextStyle(color: Color(0xFF1A1A1A))),
+                        Text('Remember Me',
+                            style: TextStyle(color: Color(0xFF1A1A1A))),
                       ],
                     ),
                     TextButton(
                       onPressed: () => Navigator.push(
-                          context, MaterialPageRoute(builder: (_) => ForgotPasswordPage())),
-                      child: Text("Forgot Password?", style: TextStyle(color: Color(0xFF3E64FF))),
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => ForgotPasswordPage())),
+                      child: Text("Forgot Password?",
+                          style: TextStyle(color: Color(0xFF3E64FF))),
                     ),
                   ],
                 ),
                 SizedBox(height: 10),
                 TextButton(
-                  onPressed: () => Navigator.push(
-                      context, MaterialPageRoute(builder: (_) => CreateAccountPage())),
+                  onPressed: () => Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => CreateAccountPage())),
                   child: Text(
                     "Create New Account",
                     style: TextStyle(color: Color(0xFF3E64FF), fontSize: 18),
@@ -168,11 +200,14 @@ class _LoginPageState extends State<LoginPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFF00C9A7),
                       padding: EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                     child: _isLoading
                         ? CircularProgressIndicator(color: Colors.white)
-                        : Text('Login', style: TextStyle(fontSize: 18, color: Colors.white)),
+                        : Text('Login',
+                        style:
+                        TextStyle(fontSize: 18, color: Colors.white)),
                   ),
                 ),
               ],
